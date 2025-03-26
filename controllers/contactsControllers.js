@@ -46,7 +46,7 @@ export const deleteContact = async (req, res, next) => {
     const { id } = req.params;
     const deleted_contact = await removeContact(id);
 
-    contact
+    deleted_contact
       ? res.json({
           status: "success",
           code: 200,
