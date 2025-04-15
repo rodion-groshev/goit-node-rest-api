@@ -5,7 +5,8 @@ import {
   removeContact,
   addContact,
   updateContact,
-} from "../services/contactsServices.cjs";
+  updateStatusContact,
+} from "../services/contactsServices.js";
 
 export const getAllContacts = async (req, res, next) => {
   try {
@@ -85,6 +86,24 @@ export const putContact = async (req, res, next) => {
           code: 200,
           data: {
             updatedContact,
+          },
+        })
+      : next(HttpError(404, "Not found"));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const patchContact = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updatedStatusContact = await updateStatusContact(id, req.body);
+    updatedStatusContact
+      ? res.json({
+          status: "success",
+          code: 200,
+          data: {
+            updatedStatusContact,
           },
         })
       : next(HttpError(404, "Not found"));
