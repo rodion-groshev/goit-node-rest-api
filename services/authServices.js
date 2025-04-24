@@ -41,4 +41,12 @@ export const logoutUser = async (id) => {
   await user.update({ token: null });
 };
 
+export const updateAvatarUser = async (id, avatarURL) => {
+  const user = await findUser({ id });
+
+  await user.update({ avatarURL });
+
+  return user.avatarURL;
+};
+
 export const findUser = (query) => User.findOne({ where: query });

@@ -1,4 +1,6 @@
 import express from "express";
+import upload from "../middlewares/upload.js";
+
 import validateBody from "../helpers/validateBody.js";
 import {
   authRegisterSchemas,
@@ -11,6 +13,7 @@ const authRouter = express.Router();
 
 authRouter.post(
   "/register",
+  upload.single("avatar"),
   validateBody(authRegisterSchemas),
   authControllers.registerController
 );
@@ -24,5 +27,12 @@ authRouter.post(
 authRouter.post("/logout", authenticate, authControllers.logoutController);
 
 authRouter.get("/current", authenticate, authControllers.getCurrentController);
+
+authRouter.patch(
+  "/avatars",
+  upload.single("avatar"),
+  authenticate,
+  authControllers.updateAvatarController
+);
 
 export default authRouter;
