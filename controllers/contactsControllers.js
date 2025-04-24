@@ -1,13 +1,12 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import gravatar from "gravatar";
+
+
 import ctrlWrapper from "../decorators/ctrlWrapper.js";
 import HttpError from "../helpers/HttpError.js";
-import {
-  listContacts,
-  getContact,
-  removeContact,
-  addContact,
-  updateContact,
-  updateStatusContact,
-} from "../services/contactsServices.js";
+import * as contactsServices from "../services/contactsServices.js";
+import { avatarsDir } from "../constants/contacts.js";
 
 const getContactsController = async (req, res) => {
   const { id: owner } = req.user;
@@ -18,7 +17,7 @@ const getContactsController = async (req, res) => {
     filter.favorite = true;
   }
 
-  const contacts = await listContacts(filter);
+  const contacts = await contactsServices.listContacts(filter);
 
   res.json({
     status: "success",
@@ -33,7 +32,7 @@ const getContactByIdController = async (req, res) => {
   const { id } = req.params;
   const { id: owner } = req.user;
 
-  const contact = await getContact({ id, owner });
+  const contact = await contactsServices.getContact({ id, owner });
 
   if (!contact) {
     throw HttpError(404, "Not found");
@@ -49,8 +48,28 @@ const getContactByIdController = async (req, res) => {
 };
 
 const createContact = async (req, res) => {
+  let avatarURL;
+
+  if (req.file) {
+    const { path: oldPath, filename } = req.file;
+    const newPath = path.join(avatarsDir, filename);
+
+    await fs.rename(oldPath, newPath);
+
+    avatarURL = path.join("avatars", filename);
+  }
+  else {
+    const { email } = req.user;
+    avatarURL = gravatar.url(email);
+  }
+
+
   const { id: owner } = req.user;
-  const newContact = await addContact({ ...req.body, owner });
+  const newContact = await contactsServices.addContact({
+    ...req.body,
+    avatarURL,
+    owner,
+  });
   res.status(201).json({
     status: "success",
     code: 201,
@@ -64,7 +83,7 @@ const deleteContact = async (req, res) => {
   const { id } = req.params;
   const { id: owner } = req.user;
 
-  const deleted_contact = await removeContact({ id, owner });
+  const deleted_contact = await contactsServices.removeContact({ id, owner });
 
   if (!deleted_contact) {
     throw HttpError(404, "Not found");
@@ -82,7 +101,10 @@ const deleteContact = async (req, res) => {
 const putContact = async (req, res) => {
   const { id } = req.params;
   const { id: owner } = req.user;
-  const updatedContact = await updateContact({ id, owner }, req.body);
+  const updatedContact = await contactsServices.updateContact(
+    { id, owner },
+    req.body
+  );
 
   if (!updatedContact) {
     throw HttpError(404, "Not found");
@@ -101,7 +123,7 @@ const patchContact = async (req, res) => {
   const { id } = req.params;
   const { id: owner } = req.user;
 
-  const updatedStatusContact = await updateStatusContact(
+  const updatedStatusContact = await contactsServices.updateStatusContact(
     { id, owner },
     req.body
   );
