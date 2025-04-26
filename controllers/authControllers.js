@@ -33,24 +33,23 @@ const registerController = async (req, res) => {
   });
 };
 
-const updateAvatarController = async (req, res) => {
-  const { id } = req.user;
+const verifyController = async (req, res) => {
+  const { verificationToken } = req.params;
 
-  if (!req.file) {
-    throw HttpError(400, "Missing avatar");
-  }
-
-  const { path: oldPath, filename } = req.file;
-  const newPath = path.join(avatarsDir, filename);
-
-  await fs.rename(oldPath, newPath);
-
-  const avatarURL = path.join("avatars", filename);
-
-  const updatedUserAvatar = await authServices.updateAvatarUser(id, avatarURL);
+  await authServices.verifyUser(verificationToken);
 
   res.json({
-    avatarURL: updatedUserAvatar,
+    message: "Verification successful",
+  });
+};
+
+const resendVerifyController = async (req, res) => {
+  const { email } = req.body;
+
+  await authServices.resendVerifyUser(email);
+
+  res.json({
+    message: "Verification email sent",
   });
 };
 
@@ -85,8 +84,31 @@ const logoutController = async (req, res) => {
   });
 };
 
+const updateAvatarController = async (req, res) => {
+  const { id } = req.user;
+
+  if (!req.file) {
+    throw HttpError(400, "Missing avatar");
+  }
+
+  const { path: oldPath, filename } = req.file;
+  const newPath = path.join(avatarsDir, filename);
+
+  await fs.rename(oldPath, newPath);
+
+  const avatarURL = path.join("avatars", filename);
+
+  const updatedUserAvatar = await authServices.updateAvatarUser(id, avatarURL);
+
+  res.json({
+    avatarURL: updatedUserAvatar,
+  });
+};
+
 export default {
   registerController: ctrlWrapper(registerController),
+  verifyController: ctrlWrapper(verifyController),
+  resendVerifyController: ctrlWrapper(resendVerifyController),
   loginController: ctrlWrapper(loginController),
   getCurrentController: ctrlWrapper(getCurrentController),
   logoutController: ctrlWrapper(logoutController),
